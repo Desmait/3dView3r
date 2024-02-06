@@ -51,7 +51,7 @@ function init() {
     controls.enableRotate = true; // Enable rotation
     controls.enablePan = false; // Disable panning
     controls.enableDamping = true;
-    controls.dampingFactor = 0.1;
+    controls.dampingFactor = 0.07;
     controls.maxPolarAngle = Math.PI; // Limit vertical rotation
     controls.minPolarAngle = 0;
     controls.rotateSpeed = 0.7;
@@ -120,9 +120,8 @@ function loadModel(modelPath) {
         scene.rotation.x = 0;
         scene.rotation.z = 0;
         // Set the camera position to look at the center of the model
-        targetCameraPosition.copy(center.clone().add(new THREE.Vector3(0, boundingBoxSize.y/0.9, distance)));
-        isCameraMoving = true;
-        // camera.lookAt(center);
+        camera.position.copy(center.clone().add(new THREE.Vector3(0, boundingBoxSize.y/0.9, distance)));
+        camera.lookAt(center);
 
         scene.add(gltf.scene);
     });
@@ -255,33 +254,28 @@ function changeModel(path) {
 
 function showHidePart(name) {
     let visibleMesh;
-    let show = false;
 
     currentModel.traverse((child) => {
         if (child.isMesh) {
             console.log(child.name);
             if (child.name === name) {
                 child.visible = !child.visible;
-                show = !child.visible;
                 visibleMesh = child;
             }
         }
     });
 
-    let boundingBox = undefined;
-
+    // Adjust camera to focus on the visible mesh
     if (visibleMesh) {
-        boundingBox = new THREE.Box3().setFromObject(show ? visibleMesh : currentModel);
-    }
-
-    if (boundingBox) {
+        const boundingBox = new THREE.Box3().setFromObject(visibleMesh);
         const center = boundingBox.getCenter(new THREE.Vector3());
 
         // Set the camera position and look at the center of the bounding box
         const boundingBoxSize = new THREE.Vector3();
         boundingBox.getSize(boundingBoxSize);
         const distance = Math.max(boundingBoxSize.x, boundingBoxSize.y, boundingBoxSize.z) * 1.5;
-        targetCameraPosition.copy(center.clone().add(new THREE.Vector3(0, boundingBoxSize.y / 0.9, distance)));
-        isCameraMoving = true;
+        camera.copy(center.clone().add(new THREE.Vector3(0, boundingBoxSize.y/0.9, distance)));
+        camera.lookAt(center);
+        // isCameraMoving = true;
     }
 }
